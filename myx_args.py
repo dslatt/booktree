@@ -67,10 +67,10 @@ class Config(object):
         nested elements, e.g. cfg.get_config("meta/dataset_name")
     """
 
-    def __init__(self, data: dict):
+    def __init__(self, data: dict = {}):
         self._data = data
 
-    def __init__(self, params):
+    def open(self, params):
         try:
             with open(params.config_file) as cf_file:
                 cfg = json.loads (cf_file.read())

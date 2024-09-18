@@ -11,6 +11,9 @@ import hashlib
 from langcodes import *
 from . import myx_classes
 
+def cache_dir():
+  return '/config/booktree'
+
 ##ffprobe
 def probe_file(filename):
     #ffprobe -loglevel error -show_entries format_tags=artist,album,title,series,part,series-part,isbn,asin,audible_asin,composer -of default=noprint_wrappers=1:nokey=0 -print_format compact "$file")
@@ -255,7 +258,7 @@ def getLogHeaders():
 def createOPF(book, path):
     try:
         # --- Generate .opf Metadata file ---
-        opfTemplate=os.path.join(os.getcwd(), "templates/booktemplate.opf") 
+        opfTemplate=os.path.join("/app/external/booktree", "templates/booktemplate.opf") 
         with open(opfTemplate, mode='r') as file:
             template = file.read()
 
@@ -319,7 +322,7 @@ def isCached(key, category, cfg):
         print (f"Checking cache: {category}/{key}...")
     
     #Check if this book's hashkey exists in the cache, if so - it's been processed
-    bookFile = os.path.join(os.getcwd(), "__cache__", category, key)
+    bookFile = os.path.join(cache_dir(), "__cache__", category, key)
     found = os.path.exists(bookFile)  
     return found      
     
@@ -328,7 +331,7 @@ def cacheMe(key, category, content, cfg):
     verbose = bool(cfg.get("Config/flags/verbose"))
 
     #create the cache file
-    bookFile = os.path.join(os.getcwd(), "__cache__", category, key)
+    bookFile = os.path.join(cache_dir(), "__cache__", category, key)
     with open(bookFile, mode="w", encoding='utf-8', errors='ignore') as file:
         file.write(json.dumps(content))
 
@@ -338,7 +341,7 @@ def cacheMe(key, category, content, cfg):
 
 def loadFromCache(key, category):
     #return the content from the cache file
-    bookFile = os.path.join(os.getcwd(), "__cache__", category, key)
+    bookFile = os.path.join(cache_dir(), "__cache__", category, key)
     with open(bookFile, mode='r', encoding='utf-8') as file:
         f = file.read()
     

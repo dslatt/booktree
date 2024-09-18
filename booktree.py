@@ -157,7 +157,10 @@ def buildTreeFromHybridSources(path, mediaPath, files, logfile, cfg):
           print (f"Looking for {f} from {path}")
           allFiles.extend(iglob(f, root_dir=path, recursive=True))
     else:
-        allFiles.extend([path])
+        tmp_path = pathlib.Path(path)
+        path = tmp_path.parent
+        allFiles.extend([tmp_path.name])
+        print(f'Using {path} & {tmp_path.name}')
 
     #Print how many files were found...
     print (f"Found {len(allFiles)} files to process...\n\n")
@@ -313,17 +316,21 @@ def buildTreeFromHybridSources(path, mediaPath, files, logfile, cfg):
     myx_utilities.printDivider()
 
 
-    return
+    return f'{len(matchedFiles)}/{len(normalBooks) - len(matchedFiles)}'
 
+def setup():
+  os.makedirs(os.path.join(myx_utilities.cache_dir(), "__cache__", "book"), exist_ok=True)
+  os.makedirs(os.path.join(myx_utilities.cache_dir(), "__cache__", "mam"), exist_ok=True)
+  os.makedirs(os.path.join(myx_utilities.cache_dir(), "__cache__", "audible"), exist_ok=True)
+  
 def audiobook_search(source_path, media_path, metadata_type, file_types, dry_run, session_key):
   files = [f'**/*.{ft}' for ft in file_types]
   print(f'source: {source_path} ({pathlib.Path(source_path).is_dir()}), media: {media_path}, metadata: {metadata_type}, file_types: {files}, dry_run: {dry_run}')
-  return
-  buildTreeFromHybridSources(
+  return buildTreeFromHybridSources(
       source_path, media_path, files, None, myx_args.Config({
           "Config": {
               "metadata": "audible",
-              "matchrate": 70,
+              "matchrate": 60,
               "fuzzy_match": "token_sort",
               "log_path": "./logs",
               "session": session_key,
@@ -392,9 +399,9 @@ if __name__ == "__main__":
         print ("booktree requires python 3.10 or higher. Please upgrade your version")
     else:
         #build __cache__ folders if they don't exist
-        os.makedirs(os.path.join(os.getcwd(), "__cache__", "book"), exist_ok=True)
-        os.makedirs(os.path.join(os.getcwd(), "__cache__", "mam"), exist_ok=True)
-        os.makedirs(os.path.join(os.getcwd(), "__cache__", "audible"), exist_ok=True)
+        os.makedirs(os.path.join(myx_utilities.cache_dir(), "__cache__", "book"), exist_ok=True)
+        os.makedirs(os.path.join(myx_utilities.cache_dir(), "__cache__", "mam"), exist_ok=True)
+        os.makedirs(os.path.join(myx_utilities.cache_dir(), "__cache__", "audible"), exist_ok=True)
 
         #process commandline arguments
         myx_args.params = myx_args.importArgs()
@@ -403,7 +410,9 @@ if __name__ == "__main__":
         if ((myx_args.params.config_file is not None) and os.path.exists(myx_args.params.config_file)):
             try:
                 #import config
-                cfg = myx_args.Config(myx_args.params)
+                cfg = myx_args.Config()
+                cfg.open(myx_args.params)
+                
 
             except Exception as e:
                 raise Exception(f"\nThere was a problem reading your config file {myx_args.params.config_file}: {e}\n")
