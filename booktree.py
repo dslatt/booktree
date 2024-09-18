@@ -3,12 +3,13 @@ from pprint import pprint
 from datetime import datetime
 from glob import iglob, glob
 import os, sys, subprocess, shlex, re
-import myx_classes
-import myx_audible
-import myx_utilities
-import myx_mam
-import myx_args
+from . import myx_classes
+from . import myx_audible
+from . import myx_utilities
+from . import myx_mam
+from . import myx_args
 import csv
+import pathlib
 import httpx
 
 #Main Functions
@@ -120,7 +121,8 @@ def buildTreeFromLog(files, logfile, cfg):
         
         #Logging processed files
         print (f"\nLogging {len(allFiles)} processed books")
-        myx_utilities.logBooks(logfile, allFiles, cfg)      
+        if logfile:
+          myx_utilities.logBooks(logfile, allFiles, cfg)      
 
         print(f"\nCompleted processing {len(allFiles)} books. {len(matchedFiles)}/{len(unmatchedFiles)} match/unmatch ratio.", end=" ")                 
         print("\n\n")    
@@ -146,13 +148,16 @@ def buildTreeFromHybridSources(path, mediaPath, files, logfile, cfg):
     verbose = bool(cfg.get("Config/flags/verbose"))
     no_cache = bool(cfg.get("Config/flags/no_cache"))
 
-    #grab all files and put it in allFiles
-    #if there were no patters provided, grab ALL known audiobooks, currently these are M4B and MP3 files
-    #find all files that fit the pattern
-    for f in format:
-        pattern = f.translate({ord('['):'[[]', ord(']'):'[]]'})
-        print (f"Looking for {f} from {path}")
-        allFiles.extend(iglob(f, root_dir=path, recursive=True))
+    if pathlib.Path(path).is_dir():
+      #grab all files and put it in allFiles
+      #if there were no patters provided, grab ALL known audiobooks, currently these are M4B and MP3 files
+      #find all files that fit the pattern
+      for f in format:
+          pattern = f.translate({ord('['):'[[]', ord(']'):'[]]'})
+          print (f"Looking for {f} from {path}")
+          allFiles.extend(iglob(f, root_dir=path, recursive=True))
+    else:
+        allFiles.extend([path])
 
     #Print how many files were found...
     print (f"Found {len(allFiles)} files to process...\n\n")
@@ -301,7 +306,8 @@ def buildTreeFromHybridSources(path, mediaPath, files, logfile, cfg):
 
     #Logging processed files
     print (f"\nLogging {len(normalBooks)} processed books")
-    myx_utilities.logBooks(logfile, normalBooks, cfg)  
+    if logfile:
+      myx_utilities.logBooks(logfile, normalBooks, cfg)  
 
     print(f"Completed processing {len(normalBooks)} books. {len(matchedFiles)}/{len(normalBooks) - len(matchedFiles)} match/unmatch ratio.")
     myx_utilities.printDivider()
@@ -309,6 +315,49 @@ def buildTreeFromHybridSources(path, mediaPath, files, logfile, cfg):
 
     return
 
+def audiobook_search(source_path, media_path, metadata_type, file_types, dry_run, session_key):
+  files = [f'**/*.{ft}' for ft in file_types]
+  print(f'source: {source_path} ({pathlib.Path(source_path).is_dir()}), media: {media_path}, metadata: {metadata_type}, file_types: {files}, dry_run: {dry_run}')
+  return
+  buildTreeFromHybridSources(
+      source_path, media_path, files, None, myx_args.Config({
+          "Config": {
+              "metadata": "audible",
+              "matchrate": 70,
+              "fuzzy_match": "token_sort",
+              "log_path": "./logs",
+              "session": session_key,
+              "paths": [
+                  {
+                    "files": files,
+                    "source_path": source_path,
+                    "media_path": media_path
+                  }
+              ],
+              "flags": {
+                  "dry_run": 1 if dry_run else 0,
+                  "verbose": 1,
+                  "multibook": 0,
+                  "ebooks": 0,
+                  "no_opf": 0,
+                  "no_cache": 0,
+                  "fixid3": 0,
+                  "add_narrators": 0
+              },
+              "target_path": {
+                  "in_series": "{author}/{series}/{series} #{part} - {title}",
+                  "no_series": "{author}/{title}",
+                  "disc_folder": "{title} {disc}"
+              },
+              "tokens":{
+                  "skip_series": 0,
+                  "kw_ignore": [".", ":", "_", "[", "]", "{", "}", ",", ";", "(", ")"],
+                  "kw_ignore_words": ["the","and","m4b","mp3","series","audiobook","audiobooks", "book", "part", "track", "novel", "disc"],
+                  "title_patterns": ["-end", "\bpart\b", "\btrack\b", "\bof\b",  "\bbook\b", "m4b", "\\(", "\\)", "_", "\\[", "\\]", "\\.", "\\s?-\\s?"]
+              }  
+          }
+      })
+  )
 
 def main(cfg):
     #make sure log_path exists

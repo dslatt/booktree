@@ -9,7 +9,7 @@ import csv
 import json
 import hashlib
 from langcodes import *
-import myx_classes
+from . import myx_classes
 
 ##ffprobe
 def probe_file(filename):

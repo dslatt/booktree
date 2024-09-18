@@ -66,6 +66,10 @@ class Config(object):
     """ Simple dict wrapper that adds a thin API allowing for slash-based retrieval of
         nested elements, e.g. cfg.get_config("meta/dataset_name")
     """
+
+    def __init__(self, data: dict):
+        self._data = data
+
     def __init__(self, params):
         try:
             with open(params.config_file) as cf_file:
