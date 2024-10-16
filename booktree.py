@@ -324,12 +324,7 @@ def buildTreeFromHybridSources(path, mediaPath, files, logfile, cfg):
 
     return f'{len(matchedFiles)}/{len(normalBooks) - len(matchedFiles)}'
 
-def setup():
-  os.makedirs(os.path.join(myx_utilities.cache_dir(), "__cache__", "book"), exist_ok=True)
-  os.makedirs(os.path.join(myx_utilities.cache_dir(), "__cache__", "mam"), exist_ok=True)
-  os.makedirs(os.path.join(myx_utilities.cache_dir(), "__cache__", "audible"), exist_ok=True)
-  
-def audiobook_search(source_path, media_path, metadata_type, file_types, dry_run, session_key):
+def audiobook_search(source_path, media_path, metadata_type, file_types, dry_run, session_key, cache_path):
   files = [f'**/*.{ft}' for ft in file_types]
   print(f'source: {source_path} ({pathlib.Path(source_path).is_dir()}), media: {media_path}, metadata: {metadata_type}, file_types: {files}, dry_run: {dry_run}')
   return buildTreeFromHybridSources(
@@ -339,6 +334,7 @@ def audiobook_search(source_path, media_path, metadata_type, file_types, dry_run
               "matchrate": 60,
               "fuzzy_match": "token_sort",
               "log_path": "./logs",
+              "cache_path": cache_path,
               "session": session_key,
               "paths": [
                   {
