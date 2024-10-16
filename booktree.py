@@ -43,7 +43,7 @@ def buildTreeFromLog(files, logfile, cfg):
                         bf=myx_classes.BookFile(f, fullpath, str(row["sourcePath"]), str(row["mediaPath"]), isHardlinked=bool(row["isHardLinked"]))
                         
                         #parse authors and series
-                        bf.ffprobeBook = myx_classes.Book(asin=str(row["id3-asin"]), title=str(row["id3-title"]), subtitle=row["id3-subtitle"], publicationName=row["id3-publicationName"], length=row["id3-length"], duration=row["id3-duration"], language=row["id3-language"])
+                        bf.ffprobeBook = myx_classes.Book(asin=str(row["id3-asin"]), title=str(row["id3-title"]), subtitle=row["id3-subtitle"], publisher=row["id3-publisher"], length=row["id3-length"], duration=row["id3-duration"], language=row["id3-language"])
                         bf.isMatched = bool(row["isMatched"])
                         bf.ffprobeBook.setAuthors(row["id3-authors"])
                         bf.ffprobeBook.setNarrators(row["id3-narrators"])
@@ -64,9 +64,15 @@ def buildTreeFromLog(files, logfile, cfg):
 
                             if book[hashKey].isMatched:
                                 if book[hashKey].metadata == "audible":
-                                    book[hashKey].bestAudibleMatch = myx_classes.Book(asin=str(row["adb-asin"]), title=str(row["adb-title"]), subtitle=row["adb-subtitle"], publicationName=row["adb-publicationName"], length=row["adb-length"], duration=row["adb-duration"], language=row["adb-language"])
+                                    book[hashKey].bestAudibleMatch = myx_classes.Book(asin=str(row["adb-asin"]), title=str(row["adb-title"]), subtitle=row["adb-subtitle"], publisher=row["adb-publisher"], length=row["adb-length"], duration=row["adb-duration"], language=row["adb-language"])
+                                    book[hashKey].bestAudibleMatch.setAuthors(row["adb-authors"])
+                                    book[hashKey].bestAudibleMatch.setNarrators(row["adb-narrators"])
+                                    book[hashKey].bestAudibleMatch.setSeries(row["adb-seriesparts"])                                
                                 elif book[hashKey].metadata == "mam":
-                                    book[hashKey].bestMAMMatch = myx_classes.Book(asin=str(row["mam-asin"]), title=str(row["mam-title"]), subtitle=row["mam-subtitle"], publicationName=row["mam-publicationName"], length=row["mam-length"], duration=row["mam-duration"], language=row["mam-language"])
+                                    book[hashKey].bestMAMMatch = myx_classes.Book(asin=str(row["mam-asin"]), title=str(row["mam-title"]), subtitle=row["mam-subtitle"], publisher=row["mam-publisher"], length=row["mam-length"], duration=row["mam-duration"], language=row["mam-language"])
+                                    book[hashKey].bestMAMMatch.setAuthors(row["mam-authors"])
+                                    book[hashKey].bestMAMMatch.setNarrators(row["mam-narrators"])
+                                    book[hashKey].bestMAMMatch.setSeries(row["mam-seriesparts"])                                
 
                     i += 1
             except csv.Error as e:
@@ -367,13 +373,9 @@ def audiobook_search(source_path, media_path, metadata_type, file_types, dry_run
   )
 
 def main(cfg):
-    #make sure log_path exists
-    log_path=cfg.get("Config/log_path")
-    if (len(log_path)==0):
-        log_path=os.path.join(os.getcwd(),"logs")    
-    
-    if not os.path.exists(os.path.abspath(log_path)):
-        os.makedirs(os.path.abspath(log_path), exist_ok=True)
+    #make sure log_path and cache path exists
+    log_path=myx_utilities.getLogPath(cfg)
+    cache_path=myx_utilities.getCachePath(cfg)
 
     #create the logfile
     logfile=os.path.join(os.path.abspath(log_path),f"booktree_log_{datetime.now().strftime('%Y%m%d%H%M%S')}.csv")
@@ -398,11 +400,6 @@ if __name__ == "__main__":
     if not sys.version_info > (3, 10):
         print ("booktree requires python 3.10 or higher. Please upgrade your version")
     else:
-        #build __cache__ folders if they don't exist
-        os.makedirs(os.path.join(myx_utilities.cache_dir(), "__cache__", "book"), exist_ok=True)
-        os.makedirs(os.path.join(myx_utilities.cache_dir(), "__cache__", "mam"), exist_ok=True)
-        os.makedirs(os.path.join(myx_utilities.cache_dir(), "__cache__", "audible"), exist_ok=True)
-
         #process commandline arguments
         myx_args.params = myx_args.importArgs()
 
