@@ -330,7 +330,7 @@ def audiobook_search(source_path, media_path, metadata_type, file_types, dry_run
   return buildTreeFromHybridSources(
       source_path, media_path, files, None, myx_args.Config({
           "Config": {
-              "metadata": "audible",
+              "metadata": metadata_type,
               "matchrate": 60,
               "fuzzy_match": "token_sort",
               "log_path": "./logs",
