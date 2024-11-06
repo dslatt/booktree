@@ -322,7 +322,7 @@ def buildTreeFromHybridSources(path, mediaPath, files, logfile, cfg):
     myx_utilities.printDivider()
 
 
-    return f'{len(matchedFiles)}/{len(normalBooks) - len(matchedFiles)}'
+    return (len(matchedFiles), len(normalBooks) - len(matchedFiles))
 
 def audiobook_search(source_path, media_path, metadata_type, file_types, dry_run, session_key, cache_path):
   files = [f'**/*.{ft}' for ft in file_types]
